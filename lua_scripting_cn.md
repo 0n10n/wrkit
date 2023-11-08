@@ -34,25 +34,25 @@ graph LR;
 
 - function wrk.format(method, path, headers, body)
 
-wrk.format 函数返回一个HTTP请求字符串， 它是wrk表的内容，再合并传进去的指定参数而获得的。
+wrk.format 函数会返回一个代表HTTP请求的字符串， 这个字符串是合并了原来wrk表内容和传进去的指定参数而获得的。
 
 - function wrk.lookup(host, service)
 
-wrk.lookup 返回一个table，包含指定`host`和`service(或者端口)`组对应的所有地址。等同于POSIX系统里的getaddrinfo() 函数。
+wrk.lookup 函数会返回一个table，包含指定`host`和`service(或者端口)`组所对应的所有地址。等同于POSIX系统里的getaddrinfo() 函数。
 
 - function wrk.connect(addr)
 
-wrk.connect 返回 true 如果address地址可以连上，否则为false。address 地址必须是wrk.lookup() 返回的对象。
+wrk.connect 函数返回 true，如果address地址可以连上，否则为false。address 地址必须是wrk.lookup() 返回的对象。
 
 
-以下全局变量是可以选的，他们必须被定义为函数functions：
+以下全局设定是可选项的，单它们必须被定义为函数functions：
 
-  - global setup    -- 在线程创建时被调用；
+  - global setup    -- 在线程创建时会被调用；
   - global init     -- 在线程开始时被调用；
   - global delay    -- 获得请求延时；
-  - global request  -- 产生 HTTP request；
-  - global response -- 获得 HTTP response 数据后的处理；
-  - global done     -- 运行结束后，获得结果的调用。  
+  - global request  -- 会调用该函数，以产生 HTTP request；
+  - global response -- 会把HTTP response 获得的数据交由它处理；
+  - global done     -- 运行结束后，获得运行的结果。  
 
 ## 设置阶段
 
@@ -60,7 +60,7 @@ wrk.connect 返回 true 如果address地址可以连上，否则为false。addre
 
 设置（setup）阶段处于目标IP地址已经解析好了，所有的线程都初始化好了，但线程还没有正式开始工作之前。
 
-每个线程都会调用一次setup()函数，并收到一个该线程对应的`userdata`对象。
+每个线程都会调用一次setup()函数，该函数的参数是当前线程的`userdata`对象。
 
   - thread.addr               - get 或者 set 该线程的服务器地址
   - thread:get(name)        - get 在当前线程的环境里，`name`变量的值
@@ -71,31 +71,28 @@ wrk.connect 返回 true 如果address地址可以连上，否则为false。addre
 
 ## 运行阶段
 
-运行阶段有以下函数：
+运行阶段包括以下函数：
 
 -  function init(args)
 -  function delay()
 -  function request()
 -  function response(status, headers, body)
 
-在运行阶段，首先会总体地执行一次init()调用，然后在每个请求周期里，再调用一次 request() 和 response()。
+在运行阶段，首先会总体地执行一次init()调用，然后在每次请求周期里，再调用一次 request() 和 response()。
 
-init() 函数会接收通过wrk命令执行，以 `--`分隔符传入的额外参数。
+init() 函数会接收wrk命令执行里的命令行参数，命令行参数以 `--`分隔符传入。
 
 delay() 会返回发给下一个请求的延迟毫秒数。
 
-request() 会返回包含当前 HTTP 请求的字符串。每次都创建一个新的请求会很花时间，在高强度压力测试下，最好是在init()里预先创建好所有请求，然后在request里快速获取预制的请求即可。
+request() 会返回包含当前 HTTP 请求的字符串。每次都创建一个新的请求很花时间，所以在高强度压力测试下，最好预先在init()里创建好所有请求，然后在request里快速获取预制的请求即可。
 
-调用 response() 可以获得HTTP 响应状态、响应头和响应体。解析响应头和响应体也很花时间，所以如果init()执行后，全局response是nil，那后续wrk会忽略这里的响应头和响应体。
+调用 response() 可以获得HTTP 响应状态、响应头和响应体。解析响应头和响应体也很花时间，所以如果init()执行后，全局response是nil，那后续wrk会忽略响应头和响应体。
 
 ## 完成阶段
 
 - function done(summary, latency, requests)
 
-  The done() function receives a table containing result data, and two
-  statistics objects representing the per-request latency and per-thread
-  request rate. Duration and latency are microsecond values and rate is
-  measured in requests per second.
+done() 函数会获得一个包含整体执行结果的表table和两个预统计对象 ，这两预统计对象是根据请求统计的延迟数和根据线程统计的请求速率。时长和延迟都是毫秒单位，速率是每秒多少个请求。
 
   latency.min              -- minimum value seen
   latency.max              -- maximum value seen
