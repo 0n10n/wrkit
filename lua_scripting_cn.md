@@ -13,7 +13,7 @@ graph LR;
     request-->response;
     response-->done;
 ```
-## 全局概览
+## 1，全局概览
 
 开放的 Lua API 包含一个全局table `wrk`和若干的全局函数。
 
@@ -42,25 +42,25 @@ wrk.lookup 函数会返回一个table，包含指定`host`和`service(或者端�
 
 - function wrk.connect(addr)
 
-wrk.connect 函数返回 true，如果address地址可以连上，否则为false。address 地址必须是wrk.lookup() 返回的对象。
+如果address地址能连上，wrk.connect 函数会返回 true，否则为false。address 地址必须是前面wrk.lookup() 返回的对象。
 
 
-以下全局设定是可选项的，单它们必须被定义为函数functions：
+以下全局设定是可选项的，但它们必须被定义为函数functions：
 
   - global setup    -- 在线程创建时会被调用；
   - global init     -- 在线程开始时被调用；
   - global delay    -- 获得请求延时；
-  - global request  -- 会调用该函数，以产生 HTTP request；
-  - global response -- 会把HTTP response 获得的数据交由它处理；
-  - global done     -- 运行结束后，获得运行的结果。  
+  - global request  -- 调用该函数，以产生需要的一个或者多个HTTP request；
+  - global response -- 用该接口处理HTTP response获得的数据；
+  - global done     -- 运行结束后，获得整体的运行结果。  
 
-## 设置阶段
+## 2，设置阶段
 
 - function setup(thread)
 
 设置（setup）阶段处于目标IP地址已经解析好了，所有的线程都初始化好了，但线程还没有正式开始工作之前。
 
-每个线程都会调用一次setup()函数，该函数的参数是当前线程的`userdata`对象。
+每个线程都会先调用一次setup()函数，该函数的参数是当前线程的`userdata`对象。
 
   - thread.addr               - get 或者 set 该线程的服务器地址
   - thread:get(name)        - get 在当前线程的环境里，`name`变量的值
@@ -69,7 +69,7 @@ wrk.connect 函数返回 true，如果address地址可以连上，否则为false
 
 通过get()/set() 传进传出的值，只能为boolean, nil, number和string类型（存疑： or tables of the same？啥意思），而 thread:stop() 只能在线程运行时被调用。
 
-## 运行阶段
+## 3，运行阶段
 
 运行阶段包括以下函数：
 
@@ -84,7 +84,7 @@ init() 函数会接收wrk命令执行里的命令行参数，命令行参数以 
 
 delay() 会返回发给下一个请求的延迟毫秒数。
 
-request() 会返回包含当前 HTTP 请求的字符串。每次都创建一个新的请求很花时间，所以在高强度压力测试下，最好预先在init()里创建好所有请求，然后在request里快速获取预制的请求即可。
+request() 会返回包含当前 HTTP 请求的字符串。每次都创建一个新的请求很花时间，所以在高强度压力测试下，最好预先在init()里创建好所有请求，然后在request里快速获取预制的请求即可（参见 `lua/init_requests.lua` 里的例子）。
 
 调用 response() 可以获得HTTP 响应状态、响应头和响应体。解析响应头和响应体也很花时间，所以如果init()执行后，全局response是nil，那后续wrk会忽略响应头和响应体。
 
